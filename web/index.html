@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPUB Auto-Beautifier — 快速精排控制台</title>
+    <!-- 引入高质感现代字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=1.0.4">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 头部导航栏 -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="logo-dot"></span>
+                <h1>EPUB Auto-Beautifier</h1>
+                <span class="badge">PRO</span>
+            </div>
+            <div class="status-indicator">
+                <span class="status-dot green"></span>
+                <span class="status-text">本地服务已就绪</span>
+            </div>
+        </header>
+
+        <!-- 主操作区 -->
+        <main class="main-content">
+            <!-- 左侧控制面板 -->
+            <section class="control-panel">
+                <!-- 拖拽上传区 -->
+                <div class="card drag-card" id="drop-zone">
+                    <input type="file" id="file-input" accept=".epub" style="display: none;">
+                    <div class="drag-content">
+                        <!-- SVG 上传图标 -->
+                        <div class="icon-glow">
+                            <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </div>
+                        <h3>拖入 EPUB 电子书</h3>
+                        <p class="subtitle">或 <span class="highlight">浏览本地文件</span></p>
+                        <p class="limit">支持 .epub 格式进行快速重排</p>
+                    </div>
+                    
+                    <!-- 上传成功后的书籍信息展示 -->
+                    <div class="book-info" id="book-info" style="display: none;">
+                        <div class="book-avatar">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        </div>
+                        <div class="book-details">
+                            <h4 id="book-title">未知书名</h4>
+                            <p id="book-author">未知作者</p>
+                        </div>
+                        <button class="btn-reset" id="btn-reupload" title="重新上传">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 排版配置面板 -->
+                <div class="card config-card disabled" id="config-panel">
+                    <h3 class="card-title">排版精调参数</h3>
+                    
+                    <!-- 模板套用控制 -->
+                    <div class="toggle-group" style="margin-bottom: 1.5em; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1em;">
+                        <div class="toggle-row">
+                            <div class="toggle-label">
+                                <h4 style="color: #4facfe; font-weight: 600;">克隆 Example 模板样式</h4>
+                                <p>使用根目录 example 里的电子书作为排版模板</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="chk-use-template">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class="input-group" id="template-select-group" style="display: none; margin-top: 1em;">
+                            <label for="select-template">选择排版模板</label>
+                            <div class="select-container">
+                                <select id="select-template" class="custom-select">
+                                    <!-- 动态插入模板列表 -->
+                                </select>
+                                <span class="select-arrow"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 行高设置 -->
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label for="range-line-height">正文行高</label>
+                            <span class="val-display" id="val-line-height">1.6</span>
+                        </div>
+                        <input type="range" id="range-line-height" min="1.3" max="2.2" step="0.1" value="1.6">
+                    </div>
+
+                    <!-- 首行缩进 -->
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label for="select-indent">段落首行缩进</label>
+                        </div>
+                        <div class="segmented-control" id="indent-segmented">
+                            <button class="seg-btn active" data-value="2em">2 字符</button>
+                            <button class="seg-btn" data-value="1.5em">1.5 字符</button>
+                            <button class="seg-btn" data-value="0em">不缩进</button>
+                        </div>
+                    </div>
+
+                    <!-- 段后间距 -->
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label for="range-margin-bottom">段落后间距 (段距)</label>
+                            <span class="val-display" id="val-margin-bottom">0.5em</span>
+                        </div>
+                        <input type="range" id="range-margin-bottom" min="0.0" max="1.5" step="0.1" value="0.5">
+                    </div>
+
+                    <!-- 字体选择 -->
+                    <div class="input-group">
+                        <label for="select-font">排版字体族 & 内嵌字体</label>
+                        <div class="select-container">
+                            <select id="select-font" class="custom-select">
+                                <option value="serif" data-custom="false">系统宋体 / 衬线字</option>
+                                <option value="sans-serif" data-custom="false">系统雅黑 / 黑体</option>
+                                <!-- 动态插入的自定义字体 -->
+                            </select>
+                            <span class="select-arrow"></span>
+                        </div>
+                    </div>
+
+                    <!-- 适配目标与简繁体转换 -->
+                    <div class="toggle-group">
+                        <div class="toggle-row">
+                            <div class="toggle-label">
+                                <h4>繁体转简体中文</h4>
+                                <p>自动校正全书为标准简体</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="chk-convert">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+
+                        <div class="toggle-row">
+                            <div class="toggle-label">
+                                <h4>多看 / Kindle 专有适配</h4>
+                                <p>注入对应平台的专有排版分页规则</p>
+                            </div>
+                            <div class="segmented-control mini" id="device-segmented">
+                                <button class="seg-btn active" data-value="duokan">多看</button>
+                                <button class="seg-btn" data-value="kindle">Kindle</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 高级排版清洗选项 (折叠组) -->
+                    <div class="advanced-settings-wrapper" id="advanced-settings-wrapper">
+                        <div class="advanced-header" id="btn-toggle-advanced">
+                            <span>高级排版清洗选项</span>
+                            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <div class="advanced-body" id="advanced-body">
+                            <div class="toggle-row mini-toggle">
+                                <div class="toggle-label">
+                                    <h5>剥离行内样式</h5>
+                                    <p>彻底清除原书干扰排版的内联 style 属性</p>
+                                </div>
+                                <label class="switch-mini">
+                                    <input type="checkbox" id="chk-clean-styles" checked>
+                                    <span class="slider-mini round"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row mini-toggle">
+                                <div class="toggle-label">
+                                    <h5>清除冗余容器</h5>
+                                    <p>展平无语义的 div 和 span 标签嵌套</p>
+                                </div>
+                                <label class="switch-mini">
+                                    <input type="checkbox" id="chk-clean-containers" checked>
+                                    <span class="slider-mini round"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row mini-toggle">
+                                <div class="toggle-label">
+                                    <h5>移除多余空行</h5>
+                                    <p>智能识别并移除文档中冗余的空白段落</p>
+                                </div>
+                                <label class="switch-mini">
+                                    <input type="checkbox" id="chk-remove-empty" checked>
+                                    <span class="slider-mini round"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row mini-toggle">
+                                <div class="toggle-label">
+                                    <h5>智能标题转换</h5>
+                                    <p>自动识别章节标题并规范为 h2 标签</p>
+                                </div>
+                                <label class="switch-mini">
+                                    <input type="checkbox" id="chk-detect-titles">
+                                    <span class="slider-mini round"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row mini-toggle">
+                                <div class="toggle-label">
+                                    <h5>智能标题分页</h5>
+                                    <p>在所有标题 (h1/h2) 标签前强制物理分页</p>
+                                </div>
+                                <label class="switch-mini">
+                                    <input type="checkbox" id="chk-page-break">
+                                    <span class="slider-mini round"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row mini-toggle">
+                                <div class="toggle-label">
+                                    <h5>图片自适应包裹</h5>
+                                    <p>对未包裹的图片自动添加自适应居中容器</p>
+                                </div>
+                                <label class="switch-mini">
+                                    <input type="checkbox" id="chk-wrap-images">
+                                    <span class="slider-mini round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 一键精排并导出按钮 -->
+                    <button class="btn-glow" id="btn-export" disabled>
+                        <span class="btn-content">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            一键精排并导出 EPUB
+                        </span>
+                        <span class="loader" id="export-loader" style="display: none;"></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 右侧实时对比预览区 -->
+            <section class="preview-panel card">
+                <div class="preview-header">
+                    <div class="preview-tabs">
+                        <span class="preview-tab-title">实时对比排版预览</span>
+                        <div class="chapter-selector-wrapper" style="display: none;" id="chapter-wrapper">
+                            <label for="chapter-select">预览章节：</label>
+                            <select id="chapter-select" class="custom-select">
+                                <!-- 动态插入章节 -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="sync-scroll-control">
+                        <label class="switch-mini">
+                            <input type="checkbox" id="chk-sync-scroll" checked>
+                            <span class="slider-mini round"></span>
+                        </label>
+                        <span>同步滚动</span>
+                    </div>
+                </div>
+
+                <div class="preview-body" id="preview-placeholder">
+                    <div class="placeholder-content">
+                        <svg class="preview-mock-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        <p>请在左侧拖入 EPUB 电子书，即可激活实时双栏对比排版预览</p>
+                    </div>
+                </div>
+
+                <div class="preview-body dual-preview" id="preview-container" style="display: none;">
+                    <!-- 左侧：原始排版 -->
+                    <div class="preview-box">
+                        <div class="preview-label tag-original">原始排版面貌</div>
+                        <div class="iframe-wrapper">
+                            <iframe id="iframe-original" sandbox="allow-same-origin allow-scripts"></iframe>
+                        </div>
+                    </div>
+                    <!-- 右侧：精排优化 -->
+                    <div class="preview-box">
+                        <div class="preview-label tag-beautified">精排优化面貌</div>
+                        <div class="iframe-wrapper">
+                            <iframe id="iframe-beautified" sandbox="allow-same-origin allow-scripts"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 进度条模态弹窗 -->
+    <div class="modal" id="progress-modal">
+        <div class="modal-content text-center">
+            <h2>正在为您精排电子书</h2>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+            <p class="progress-percent" id="progress-percent">0%</p>
+            <p class="progress-status" id="progress-status">正在初始化任务...</p>
+        </div>
+    </div>
+
+    <!-- 下载弹窗提示 -->
+    <div class="modal" id="download-modal">
+        <div class="modal-content">
+            <div class="modal-success-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h2>精排书籍生成成功</h2>
+            <p id="export-success-message">已完美为您重构排版，并进行了多端适配优化！</p>
+            <div class="download-actions">
+                <a href="#" class="btn-glow success" id="btn-modal-download" style="display: none;">立即下载 EPUB</a>
+                <button class="btn-secondary" id="btn-modal-close" style="width: 100%;">好的</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js?v=1.0.6"></script>
+</body>
+</html>

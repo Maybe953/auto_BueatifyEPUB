@@ -1,0 +1,39 @@
+# 电子书文件（严格排除）
+*.epub
+*.mobi
+*.azw3
+*.pdf
+
+# 运行过程中的临时工作目录与输出目录
+work/
+out/
+scratch/
+
+# Python 虚拟环境与缓存
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 本地大字体文件（保留 README）
+fonts/*.ttf
+fonts/*.TTF
+fonts/*.otf
+
+# 临时测试与日志文件
+*.log
+*log*.txt
+target_output.txt
+target_aside.txt
+qinbeng_anchor.txt
+styled_test.html
+
+# 根目录下的测试图像
+978fc5c0a4eda163.jpg
+b5c2f68473.jpg
+boxset_cover.jpg
+
+# 编辑器与系统文件
+.DS_Store
+Thumbs.db
